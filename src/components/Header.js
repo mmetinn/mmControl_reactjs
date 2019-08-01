@@ -19,7 +19,7 @@ class Header extends React.Component {
 
         return (
             <header>
-                <nav className="container navbar navbar-expand-lg navbar-light justify-content-between">
+                <nav className="container navbar navbar-expand-lg justify-content-between">
                     <a className="navbar-brand" href="#">M&M-Control</a>
                     <button onClick={this.changeNavState} className="navbar-toggler" type="button">
                         <span className="navbar-toggler-icon"></span>

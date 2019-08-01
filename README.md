@@ -1,4 +1,4 @@
-#M&M Medic Web Application
+# M&M Medic Web Application
 
 # Deprecation Warning
 
