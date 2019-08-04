@@ -10,7 +10,7 @@ class AuthView extends React.Component {
         //2 Kayıt Ekranı
         //3 Şifre Reset Ekranı
         this.state={
-            currentView:1
+            currentView:2
         }
     }
 
