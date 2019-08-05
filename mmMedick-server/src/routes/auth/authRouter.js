@@ -25,20 +25,21 @@ const route = () => {
 
         con.query("SELECT * FROM doctors", function (err, result, fields) {
             if (err) throw err;
-            var retVal = findEmailInJson(result, email);
-            console.log(retVal);
+            var emailIsAvailable = findEmailInJson(result, email);
+            console.log(emailIsAvailable);
 
-            if (!retVal) {
+            if (!emailIsAvailable) {
                 res.send({
                     status: false,
-                    message: "böyle bir email adresi sistemde kayıtlı değil"
+                    message: "Böyle bir email adresi sistemde kayıtlı değil."
                 })
             } else {
-                if (retVal.doctor_password === passwordHashed) {
-                    const token = jwt.sign({ userId: retVal.doctor_id }, config.jwtSecret);
+                if (emailIsAvailable.doctor_password === passwordHashed) {
+                    const token = jwt.sign({ userId: emailIsAvailable.doctor_id }, config.jwtSecret);
                     res.send({
                         status: true,
-                        token: token
+                        token: token,
+                        userData: result
                     })
                 } else {
                     res.send({
@@ -60,22 +61,39 @@ const route = () => {
         console.log(password);
 
         const passwordHashed = crypto.createHmac('sha256', config.passwordSecret).update(password).digest('hex');
-
-
-
+        let stateQuery={
+            status:true,
+            registered: true,
+            errMessage:'Kayıt başarıyla gerçekleşti.'
+        }
         var sql = "INSERT INTO doctors (isDoctor, doctor_sex,doctor_degree,doctor_name," +
             "doctor_lastname,doctor_dateofbirth,doctor_placeofwork,doctor_expertise," +
             "doctor_livecity,doctor_livetown,doctor_phonenumber,doctor_email,doctor_password) VALUES ('" + isDoctor + "','" + sex + "','"
             + degree + "','" + doctorName + "','" + doctorLastName + "','"
             + dateOfBirth + "','" + placeOfWork + "','" + expertise + "','"
-            + liveCity + "','" + liveTown + "','" + phoneNumber + "','" + email + "','" + password + "')";
+            + liveCity + "','" + liveTown + "','" + phoneNumber + "','" + email + "','" + passwordHashed + "')";
         con.query(sql, function (err, result) {
-            if (err) throw err;
-            console.log("1 record inserted");
+            if (err) {
+                console.log(err);
+                if(err.sqlMessage.search('doctor_email')!==-1){
+                    stateQuery.status=false;
+                    stateQuery.registered=false;
+                    stateQuery.errMessage='Bu email zaten sistemimizde kayıtlı';
+                }else if(err.sqlMessage.search('doctor_phonenumber')){
+                    stateQuery.status=false;
+                    stateQuery.registered=false;
+                    stateQuery.errMessage='Bu telefon numarası zaten sistemimizde kayıtlı';                    
+                }
+                res.send(stateQuery);
+                return;
+            } else {
+                res.send(stateQuery);                
+                console.log("1 record inserted");
+            }
         });
 
 
-        res.send(passwordHashed);
+
     })
     return router
 }

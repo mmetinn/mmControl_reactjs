@@ -2,9 +2,11 @@ import React from 'react';
 import InputNormal from '../Inputs/InputNormal';
 import PhoneNumberInput from '../Inputs/PhoneNumberInput';
 import InputWithBtn from '../Inputs/InputWithBtn';
+import Axios from 'axios';
+import * as Http from 'utils/httpHelper'
 
 class SignUpView extends React.Component {
-    
+
     constructor() {
         super();
         this.state = {
@@ -22,7 +24,15 @@ class SignUpView extends React.Component {
             email: '',
             emailRepeat: '',
             password: '',
-            passwordRepeat: ''
+            passwordRepeat: '',
+            hasError: false,
+            errorMessage: '',
+            hasPassEmailMatchError: false,
+            errorPassEmail: '',
+            alreadyRegisteredMessage: '',
+            alreadyRegistered: true,
+            successRegistered: true
+
         }
     }
 
@@ -30,64 +40,86 @@ class SignUpView extends React.Component {
         this.setState({
             [e.target.id]: e.target.value
         })
-        // console.log(e.target.password);
-    /*    if (e.target.id === "password") {
-            password = e.target.value
-        } if (e.target.id === "passwordRepeat") {
-            passwordRepeat = e.target.value
-        }        */
-
     }
 
 
 
-    /* onUserClick = () => {
-         console.log(this.state);
-         const user = {
-             name: "Muhammet METİN",
-             email: "mehmetmetin436@gmail.com",
-             age: 21,
-             gender: "male"
-         }
-         this.props.loginUserData(user);
-     }
- */
     onSignUp = (e) => {
         //formun normal davranısını preventdefault ile durdurduk
         //çünkü form sayfayı yaniler ve biz bunu istemiyoruz.
         e.preventDefault();
-        console.log(this.state);
         const model = this.state;
-        if(model.password !== model.passwordRepeat){
-            alert("Şifreler uyuşmuyor")
-        }if(model.email !== model.emailRepeat){
-            alert("Emailler uyuşmuyor")
+        if (model.isDoctor === '' || model.sex === '' || model.degree === '' || model.doctorName === '' ||
+            model.doctorLastName === '' || model.dateOfBirth === '' || model.placeOfWork === '' || model.expertise === '' ||
+            model.liveCity === '' || model.liveTown === '' || model.phoneNumber === '' || model.email === '' ||
+            model.emailRepeat === '' || model.password === '' || model.passwordRepeat === '') {
+            console.log(model);
+
+            this.setState({
+                hasError: true,
+                errorMessage: "Lütfen Tüm alanları doldurnuz"
+            });
+            if (this.state.password !== this.state.passwordRepeat && this.state.email !== this.state.emailRepeat) {
+                this.setState({
+                    hasPassEmailMatchError: true,
+                    errorPassEmail: "Emailler ve şifreler eşleşmiyor"
+                })
+            } else if (this.state.password !== this.state.passwordRepeat) {
+                this.setState({
+                    hasPassEmailMatchError: true,
+                    errorPassEmail: "Şifreler eşleşmiyor"
+                })
+            } else if (this.state.email !== this.state.emailRepeat) {
+                this.setState({
+                    hasPassEmailMatchError: true,
+                    errorPassEmail: "Emailler eşleşmiyor"
+                })
+            }
+            return;
         }
-        fetch('http://localhost:3300/v1/auth/sign-up', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(model),
-        }).then(res => res.json())
-            .then(res => {
-                console.log("res:", res);
+
+        Http.post('auth/sign-up', model).then(res => {
+            console.log("res==>", res);
+            this.setState({
+                alreadyRegistered: res.status,
+                alreadyRegisteredMessage: res.errMessage
             })
+
+        });
+    }
+
+    alreadyRegistered = () => {
+        if(!this.state.alreadyRegistered){
+            return <div className="alert alert-danger">{this.state.alreadyRegisteredMessage}</div>            
+        }else{
+            return <div className="alert alert-primary">{this.state.alreadyRegisteredMessage}</div>                        
+        }
+    }
+    
+    passEmalMatchError = () => {
+        return <div className="alert alert-danger">{this.state.errorPassEmail}</div>
+    }
+    renderError = () => {
+        return <div className="alert alert-danger">{this.state.errorMessage}</div>
     }
 
     render(props) {
+        const Error = this.renderError;
+        const PassEmailErr = this.passEmalMatchError;
+        const AlreadyRegistered = this.alreadyRegistered;
         return (
             <div className="signup-container">
                 <form onSubmit={this.onSignUp}>
                     <label>Doktor Musunuz?</label>
                     <select id="isDoctor" onChange={this.inputChange} className="custom-select custom-select-sm">
-                        <option defaultValue>Evet</option>
-                        <option value="hayır">Hayır</option>
+                        <option defaultValue>Seçiniz</option>
+                        <option value="Evet">Evet</option>
+                        <option value="Hayır">Hayır</option>
                     </select>
                     <label>Cinsiyetiniz</label>
                     <select id="sex" onChange={this.inputChange} className="custom-select custom-select-sm">
-                        <option defaultValue>Kadın</option>
+                        <option defaultValue>Seçiniz</option>
+                        <option value="Kadın">Kadın</option>
                         <option value="Erkek">Erkek</option>
                     </select>
                     <label>Ünvanınız</label>
@@ -116,6 +148,9 @@ class SignUpView extends React.Component {
 
                     <button type="submit" className="btn btn-primary">Kayıt Ol</button>
                 </form>
+                {this.state.hasError ? <Error /> : null}
+                {this.state.hasPassEmailMatchError ? <PassEmailErr /> : null}
+                {!this.state.alreadyRegistered ? <AlreadyRegistered /> : this.state.successRegistered  ? <AlreadyRegistered /> : null }
                 <p>
                     Zaten kaydınız var mı?<br />
                     Giriş yapmak için <b><u><a style={{ fontSize: "18px" }} href="#" onClick={e => {
